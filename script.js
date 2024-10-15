@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const throttleTimeout = 1000; // Time between video switches
     const maxVideoIndex = videos.length - 1; // Last video index
     let scrollCount = 0; // Keeps track of the number of scrolls
+    let startY = 0; // To record the touch starting position
+    let endY = 0; // To record the touch end position
 
     // Function to show a video based on the index
     function showVideo(index) {
@@ -22,8 +24,18 @@ document.addEventListener("DOMContentLoaded", function() {
     // Initially show the first video
     showVideo(currentVideoIndex);
 
-    // Handle scroll event to switch between videos
-    window.addEventListener("wheel", (event) => {
+    // Handle touch start event to record the starting Y position
+    window.addEventListener("touchstart", (event) => {
+        startY = event.touches[0].clientY;
+    });
+
+    // Handle touch move event to get the end position and switch videos accordingly
+    window.addEventListener("touchend", (event) => {
+        endY = event.changedTouches[0].clientY;
+
+        // Calculate the vertical swipe direction
+        let deltaY = startY - endY;
+
         if (isThrottled) return; // Prevent action if still in cooldown
 
         // If user has seen all videos, allow normal scrolling
@@ -33,18 +45,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
         isThrottled = true;
 
-        // Scroll down (event.deltaY > 0) or scroll up (event.deltaY < 0)
-        if (event.deltaY > 0 && currentVideoIndex < maxVideoIndex) {
-            // Moving to the next video
+        // Swipe down (deltaY > 0) or swipe up (deltaY < 0)
+        if (deltaY > 50 && currentVideoIndex < maxVideoIndex) { // Swipe down
             currentVideoIndex++;
             scrollCount++;
-        } else if (event.deltaY < 0 && currentVideoIndex > 0) {
-            // Moving to the previous video
+        } else if (deltaY < -50 && currentVideoIndex > 0) { // Swipe up
             currentVideoIndex--;
             scrollCount--;
         }
 
-        // Only change the video within the first 3 scrolls
+        // Only change the video within the first 3 swipes
         if (scrollCount <= maxVideoIndex) {
             showVideo(currentVideoIndex);
         }
